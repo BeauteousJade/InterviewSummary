@@ -25,3 +25,47 @@ expectWeaklyReachable方法检测的入口，方法里面会创建对象对应�
 然后就是触发检测。检测最终会到HeapDumpTrigger的scheduleRetainedObjectCheck方法，这会把检测任务post 一下，保证垃圾回收能够足够时间执行。
 
 最后，就是开始检测，检测之前首先会手动触发一下GC。然后获取当前没有被回收对象的数量，如果数量没超过阈值(默认是5)，任务直接结束；其次，就是看上一次检测时间跟本次的检测时间的间隔，没超过60s，也直接结束任务。最后就是dump内存，然后分析引用链，有泄漏的地方，对应抛出提示。
+
+## 5. 新应用的实现方案
+[冷知识 —— 如何实现 LeakCanary 桌面多出一个“新应用”的效果](https://juejin.cn/post/6844904100031643661)
+
+`<activity-alias>`，顾名思义，Activity 的别名，是在应用清单文件 AndroidManifest.xml 中申明，`在 <application>` 标签之下。
+
+语法大致如下：
+```
+<activity-alias android:enabled=["true" | "false"]
+                android:exported=["true" | "false"]
+                android:icon="drawable resource"
+                android:label="string resource"
+                android:name="string"
+                android:permission="string"
+                android:targetActivity="string" >
+                . . .
+</activity-alias>
+```
+`<activity-alias>` 会包含一个目标 Activity，具有自己的一组 Intent 过滤器，Intent 过滤器可以指定 android.intent.action.MAIN 和 android.intent.category.LAUNCHER 标志，这样就会以一个新的图标入口出现在手机的桌面启动器当中。
+
+示例如下：
+```
+<application
+    . . .>
+    
+    . . .
+    
+    <activity
+        android:name=".SecondActivity"/>
+    
+    <activity-alias
+        android:name="com.jason.demo.dynamicshortcut.ShortcutLauncherActivity"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher_alias"
+        android:label="ActivityAlias"
+        android:targetActivity=".SecondActivity">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity-alias>
+    
+</application>
+```
