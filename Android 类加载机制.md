@@ -3,7 +3,7 @@
 
 # Class loader
 >1. Java class load有：`Bootstrap ClassLoader`、`Extensions Classloader`和`Application Classloader`
->2. Android class load 有：`BootClassloader`、`PathClassloader`和DexClassLoader`
+>2. Android class load 有：`BootClassloader`、`PathClassloader`和`DexClassLoader`
 
 # 关系和作用
 &emsp;&emsp;关系图如下：
