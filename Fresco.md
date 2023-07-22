@@ -12,3 +12,6 @@ Fresco的init给每一个View设置了一个静态sDraweecontrollerbuildersuppli
 
 ### 4. 通过 DataSource 发起图片加载
 DraweeController的submitRequest方法发起请求，拿到一个DataSource对象进行请求。在创建DataSource 的时候，会指定创建Producer责任链，用来分布请求、解析和处理图片。
+
+### 5. 坑点
+fresco在加载圆角(不是4个角都圆角)图片的时候，用的是BitmapShader，在Android 9.0及其以上可能会出现模糊的情况。这种情况下，一般不能使用Fresco的圆角配置，可以使用系统的setOutlineProvider去实现。
