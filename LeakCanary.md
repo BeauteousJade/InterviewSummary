@@ -35,6 +35,12 @@ LeakCanary内部使用Shark来分析内存泄漏的引用链，主要分为三�
 这个地方重点在于如何找到泄漏的 objectId，因为找到 objectId，即可找到泄漏引用链。在分析 hprof 的时候我们可以拿到 dump 时的内存实例，那么，我们可以根据这个实例来判断是否泄漏，例如：
 > Activity : 判断实例是否是 android.app.Activity 的子类，并且 mFinished 或 mDestroyed 是否为 true (Activity 关闭时该值会为 true)，因为 Activity 不泄露的话肯定是会被释放，所以，不可能存在于 dump 的实例中，有就是发生了泄漏
 
+由于 dump hprof 会暂停所有 java 线程问题，致使 LeakCanary 只能应用于线下检测。但 Koom 和 Liko 另辟蹊径，采用 linux 的 copy-on-write 机制，从当前的主线程 fork 出一个子进程，然后在子进程进行 dump 分析，对于用户所在的进程不会有任何感知。 ​
+
+这个地方会有个坑，就是在 fork 子进程的时候 dump hprof。由于 dump 前会先 suspend 所有的 java 线程，等所有线程都挂起来了，才会进行真正的 dump。由于 copy-on-write 机制，子进程也会将父进程中的 threadList 也拷贝过来，但由于 threadList 中的 java 线程活动在父进程，子进程是无法挂起父进程中的线程的，然后就会一直处于等待中。 ​
+
+为了解决这个问题，Koom 和 Liko 采用欺骗的方式，在 fork 子进程之前，先将父进程中的 threadList 全部设置为 suspend 状态，然后 fork 子进程，子进程在 dump 的时候发现 threadList 都为挂起状态了，就立马开始 dump hprof，然后父进程在 fork 操作之后，立马 resume 恢复回 threadList 的状态 ​
+
 
 ## 6. 新应用的实现方案
 [冷知识 —— 如何实现 LeakCanary 桌面多出一个“新应用”的效果](https://juejin.cn/post/6844904100031643661)
